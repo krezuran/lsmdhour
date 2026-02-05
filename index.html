@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>LSMD Saatlik BBCode Oluşturucu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #e3f2fd;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      width: 95%;
+      max-width: 900px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    }
+    h1 { text-align: center; color: #64b5f6; }
+    .group { margin-bottom: 15px; }
+    label { display:block; margin-bottom:6px; color:#90caf9; font-weight:600; }
+    input, textarea {
+      width:100%; padding:10px; border-radius:8px; border:none; outline:none;
+      background:#1e2f40; color:#e3f2fd; font-size:14px;
+    }
+    textarea { min-height:80px; }
+    button {
+      width:100%; padding:14px; margin-top:12px; border:none; border-radius:10px;
+      background:linear-gradient(135deg,#2196f3,#42a5f5);
+      color:#fff; font-size:16px; font-weight:bold; cursor:pointer;
+    }
+    .output {
+      margin-top:20px; background:#0f1c28; padding:15px; border-radius:10px;
+      font-family:Consolas, monospace; font-size:12px; white-space:pre-wrap;
+      max-height:300px; overflow-y:auto;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+<h1>Saatlik Mesai Raporu</h1>
+
+
+<div class="group"><label>Mesai Başlangıç (HH.MM)</label><input id="basSaat" placeholder="18.28"></div>
+<div class="group"><label>Mesai Bitiş (HH.MM)</label><input id="bitSaat" placeholder="20.28"></div>
+<div class="group"><label>Kanıt Linki</label><input id="kanit"></div>
+
+<button onclick="baslat()">Başlat</button>
+<button id="nextBtn" onclick="sonraki()" style="display:none;">Sonraki Saatlik Rapor</button>
+
+<div id="cikti" class="output" style="display:none;"></div>
+</div>
+
+<script>
+let currentHour = 0;
+let totalHours = 0;
+let startDecimal = 0;
+
+function toDecimal(t){ const [h,m]=t.split('.').map(Number); return h + m/60; }
+
+function baslat(){
+  startDecimal = toDecimal(document.getElementById('basSaat').value);
+  const end = toDecimal(document.getElementById('bitSaat').value);
+  totalHours = Math.floor(end - startDecimal); // dakika umursanmıyor
+  currentHour = 0;
+  document.getElementById('nextBtn').style.display='block';
+  sonraki();
+}
+
+function sonraki(){
+  const out = document.getElementById('cikti');
+
+  if(currentHour >= totalHours){
+    out.style.display='block';
+    out.textContent = '⛔ Mesai raporları tamamlandı. Oluşturulacak başka saat yok.';
+    document.getElementById('nextBtn').style.display='none';
+    return;
+  }
+
+  const h1 = startDecimal + currentHour;
+  const h2 = h1 + 1;
+
+  const textSaat = `${format(h1)} - ${format(h2)} arası mesaide bulunuldu.`;
+
+  const bbcode = `[div style="background: url(https://i.hizliresim.com/nb2nslz.jpg); background-size: cover; background-position: center; padding: 50px; border-radius: 10px;"]
+[div style="background: linear-gradient(135deg, #1a2d42 0%, #2a3f54 100%); padding: 35px; border-radius: 10px; width: 90%; max-width: 950px; margin: auto; box-shadow: 0 0 30px rgba(0,0,0,0.5); color: #E3F2FD; font-family: 'Georgia', serif; line-height: 1.7; border: 2px solid #2196F3;"]
+[center]
+[img]https://i.hizliresim.com/gycw2sj.png[/img]
+[size=5][b][color=#64B5F6]LOS SANTOS MEDICAL DEPARTMENT[/color][/b][/size]
+[size=12pt][i][color=#90CAF9]Official Medical Report Form[/color][/i][/size]
+[/center]
+
+[div style="background: linear-gradient(135deg, #2c4a6a 0%, #3d5a7a 100%); padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid #42A5F5; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"]
+[b][color=#81D4FA][size=3]I. HASTA BİLGİLERİ[/size][/color][/b]
+[color=#E3F2FD]
+[b]Ad Soyad:[/b] [i]-[/i]
+
+[b]Cinsiyet:[/b] [i]-[/i]
+[/color]
+[/div]
+
+[div style="background: linear-gradient(135deg, #2c4a6a 0%, #3d5a7a 100%); padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid #42A5F5; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"]
+[b][color=#81D4FA][size=3]II. KLİNİĞE BAŞVURU ÖZETİ[/size][/color][/b]
+[i][color=#E3F2FD]
+${textSaat}
+[/color][/i]
+[/div]
+
+[div style="background: linear-gradient(135deg, #2c4a6a 0%, #3d5a7a 100%); padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid #42A5F5; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"]
+[b][color=#81D4FA][size=3]III. TANI & TEDAVİ[/size][/color][/b]
+[i][color=#E3F2FD]
+${textSaat}
+[/color][/i]
+[/div]
+
+[div style="background: linear-gradient(135deg, #2c4a6a 0%, #3d5a7a 100%); padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid #42A5F5; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"]
+[b][color=#81D4FA][size=3]KANITLAR[/size][/color][/b]
+[spoiler]${document.getElementById('kanit').value || '-'}[/spoiler]
+[/div]
+
+[center]
+[size=4][i][color=#90CAF9]Los Santos Medical Department – Committed to Care.[/color][/i][/size]
+[/center]
+
+[center][img width=300]https://i.hizliresim.com/lcazpb1.png[/img][/center]
+[/div][/div]`;
+
+  navigator.clipboard.writeText(bbcode);
+  out.style.display='block';
+  out.textContent = bbcode;
+
+  currentHour++;
+
+}
+
+function format(d){
+  const h = Math.floor(d);
+  const m = Math.round((d-h)*60);
+  return `${String(h).padStart(2,'0')}.${String(m).padStart(2,'0')}`;
+}
+</script>
+</body>
+</html>
